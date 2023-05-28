@@ -24,7 +24,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 
 
-df = pd.read_excel('s3://feacapstone/Capstone Database.xls')
+df = pd.read_excel('s3://feacapstone/Capstone Database.xlsx')
 
 #df = pd.read_excel('/Users/antoniocucala/Desktop/Def2.xls')
 
