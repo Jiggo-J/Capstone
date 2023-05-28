@@ -24,9 +24,9 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 
 
+df = pd.read_excel('s3://feacapstone/Capstone Database.xlsxs')
 
-
-df = pd.read_excel('/Users/antoniocucala/Desktop/Def2.xls')
+#df = pd.read_excel('/Users/antoniocucala/Desktop/Def2.xls')
 
 # Create a dictionary to map the original column names to their English translations
 column_name_mapping = {
