@@ -1,3 +1,6 @@
+
+#Import the neccessary libraries 
+
 import pandas as pd
 import streamlit as st
 import pandas as pd
@@ -22,11 +25,9 @@ from streamlit_folium import folium_static
 import plotly.graph_objects as go
 import altair as alt
 
-st.set_option('deprecation.showPyplotGlobalUse', False)
+#We import the database
 
-
-
-df = pd.read_excel('s3://feacapstone/Capstone Database.xlsx')
+df = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Capstone Database.xlsx') 
 
 
 # Define the format_number function
@@ -609,8 +610,9 @@ column_name_mapping = {
 # Rename columns using the dictionary
 df.rename(columns=column_name_mapping, inplace=True)
 
+# Calculate mean values to fill na skip non int values
+mean_values = df.mean(skipna=True, numeric_only=True)
 
-mean_values = df.mean()
 df = df.fillna(mean_values)
 
 ########## Here we start to develop the App
@@ -1669,7 +1671,7 @@ if choice == "Valuation Calculator":
     st.subheader("DCF Valuation Result")
     st.write(f"The discounted cash flow (DCF) for {company_name} is: {dcf:.2f} thousand EUR")
 
-
+    
 
 
 
