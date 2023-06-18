@@ -27,7 +27,8 @@ import altair as alt
 
 #We import the database
 
-df = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Capstone Database.xlsx') 
+df = pd.read_excel('https://feacapstone.s3.amazonaws.com/Capstone+Database.xlsx', engine='openpyxl')
+
 
 
 # Define the format_number function
