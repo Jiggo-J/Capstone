@@ -27,7 +27,7 @@ import altair as alt
 
 #We import the database
 
-df = pd.read_excel('https://feacapstone.s3.amazonaws.com/Capstone+Database.xlsx', engine='openpyxl')
+df = pd.read_excel('s3://feacapstone/Capstone Database.xlsx')
 
 
 
