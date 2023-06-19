@@ -637,6 +637,30 @@ df = df.fillna(mean_values)
 
 df.drop('Unnamed: 0', axis=1, inplace=True)
 
+#Function to convert all non-numeric values to numeric values 
+def convert_columns_to_numeric(df):
+    # List of column names to skip
+    columns_to_skip = ['Name', 'Tax ID', 'BvD Number', 'City', 'Autonomous Community', 'Postal Code', 
+                       'Website', 'Province', 'Country']
+
+    for column in df.columns:
+        # Skip the column if it's in the list of columns to skip
+        if column in columns_to_skip:
+            continue
+
+        # Convert the column to numeric, coercing non-numeric values to NaN
+        df[column] = pd.to_numeric(df[column], errors='coerce')
+
+        # If the column was successfully converted to numeric,
+        # fill NaN values with the column mean
+        if pd.api.types.is_numeric_dtype(df[column]):
+            df[column] = df[column].fillna(df[column].mean())
+    return df
+
+
+df = convert_columns_to_numeric(df)
+
+
 ########## Here we start to develop the App
 
 # Define app layout
@@ -1695,7 +1719,7 @@ elif choice == "Machine Learning Insights":
         features = features.apply(pd.to_numeric, errors='coerce')
 
         # Handle missing values by filling them with column means
-        features = features.fillna(features.mean())
+        features = features.fillna(features.mean(skipna=True, numeric_only=True))
 
         # Perform any necessary data preprocessing steps (e.g., scaling features)
         scaler = StandardScaler()
@@ -1715,7 +1739,7 @@ elif choice == "Machine Learning Insights":
         # You can examine the characteristics and patterns of each cluster using various techniques.
 
         # For example, you can group the data by cluster and calculate the mean values for each feature
-        cluster_means = df.groupby('Cluster').mean()
+        cluster_means = df.groupby('Cluster').mean(numeric_only=True)
 
         # Create a dropdown menu for selecting the x and y axes variables
         x_variable = st.selectbox("Select X-Axis Variable:", variables)
@@ -1744,7 +1768,7 @@ elif choice == "Machine Learning Insights":
         cluster_data = df[df['Cluster'].isin(selected_clusters)].filter(columns_to_filter)
 
         # Group the data by cluster and calculate the mean values for each variable
-        cluster_means = cluster_data.groupby('Cluster').mean()
+        cluster_means = cluster_data.groupby('Cluster').mean(numeric_only=True)
 
         # Convert the cluster means dataframe to a long format
         cluster_means = cluster_means.reset_index().melt(id_vars='Cluster', var_name='Variable', value_name='Value')
@@ -1976,7 +2000,6 @@ elif choice == "Valuation Calculator":
 
         # Perform P/E ratio valuation
         pe_ratio_valuation(company_name, earnings_per_share)
-
 
 
 
