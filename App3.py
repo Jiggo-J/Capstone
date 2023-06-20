@@ -34,8 +34,8 @@ from scipy.stats import ttest_ind, f_oneway, chi2_contingency
 
 
 #We import the database
-#df = pd.read_excel('s3://feacapstone/Capstone Database.xlsx')
-df = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Capstone Database_4.5.xlsx') 
+df = pd.read_excel('s3://feacapstone/Capstone Database.xlsx')
+#df = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Capstone Database_4.5.xlsx') 
 
 
 # Define the format_number function
