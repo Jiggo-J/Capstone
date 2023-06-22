@@ -43,8 +43,8 @@ def format_number(number):
 
 
 #We import the database
-#df = pd.read_excel('s3://feacapstone/Capstone Database.xlsx')
-df = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\preprocessed_df.xlsx') 
+df = pd.read_excel('s3://feacapstone/Capstone Database.xlsx')
+#df = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\preprocessed_df.xlsx') 
 
 
 
