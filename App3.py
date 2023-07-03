@@ -1,6 +1,9 @@
 #Import the neccessary libraries 
 
 import locale
+import boto3
+from PIL import Image
+import io
 
 # Data Manipulation and Analysis
 import pandas as pd
@@ -101,20 +104,37 @@ df_cashflow = pd.read_excel('s3://feacapstone/cashflow_adjusted.xlsx')
 st.title('M&A App')
 
 #Add Logos
-# Add pictures in the sidebar
-from PIL import Image
-##Image Import AWS
-image1 = Image.open('s3://feacapstone/Esade.png')
-image = Image.open('s3://feacapstone/Deloitte.png')
+# Create a boto3 client for S3
+s3 = boto3.client('s3')
 
-#image1 = Image.open('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Esade.png')
-#image = Image.open('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Deloitte.png')
+# Your S3 bucket name
+bucket_name = 'feacapstone'
 
-image.thumbnail((200, 200))
-image1.thumbnail((200, 200))
+# The file names of the images
+file_names = ['Esade.png', 'Deloitte.png']
 
+# A list to store the opened image objects
+images = []
+
+for file_name in file_names:
+    # Get the file from S3 as a byte stream
+    file_byte_string = s3.get_object(Bucket=bucket_name, Key=file_name)['Body'].read()
+
+    # Open the image with PIL
+    image = Image.open(io.BytesIO(file_byte_string))
+
+    # Create a thumbnail of the image with a max dimension of 200
+    image.thumbnail((200, 200))
+
+    # Add the PIL Image object to the list
+    images.append(image)
+
+# The PIL Image objects can now be accessed from the list
+image1, image2 = images[0], images[1]
+
+# Use Streamlit to display the images in the sidebar
 st.sidebar.image(image1)
-st.sidebar.image(image, caption='Developed by Esade and Deloitte')
+st.sidebar.image(image2, caption='Developed by Esade and Deloitte')
 
 # Add sidebar for navigation
 
