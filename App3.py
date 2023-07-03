@@ -103,7 +103,7 @@ st.title('M&A App')
 #Add Logos
 # Add pictures in the sidebar
 from PIL import Image
-#Image Import AWS
+##Image Import AWS
 image1 = Image.open('s3://feacapstone/Esade.png')
 image = Image.open('s3://feacapstone/Deloitte.png')
 
