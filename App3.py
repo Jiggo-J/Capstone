@@ -1075,9 +1075,9 @@ elif choice == 'Market Analysis':
 elif choice == "Valuation Calculator":
     st.title("Valuation Calculator")
 
-
     # Set the locale to the desired format
-    locale.setlocale(locale.LC_ALL, 'en_US')
+    locale.setlocale(locale.LC_ALL, 'en_US.utf8')
+
 
 
     st.subheader('DCF Valuation Calculator')
