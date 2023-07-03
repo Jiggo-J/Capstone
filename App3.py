@@ -1,5 +1,7 @@
 #Import the neccessary libraries 
 
+import locale
+
 # Data Manipulation and Analysis
 import pandas as pd
 import numpy as np
@@ -30,6 +32,8 @@ from streamlit_folium import folium_static
 from scipy.stats import ttest_ind, f_oneway, chi2_contingency
 
 
+
+
 # Define the format_number function
 def format_number(number):
     if isinstance(number, str):
@@ -41,36 +45,96 @@ def format_number(number):
         except ValueError:
             return "Invalid Number"
 
+#Define Background function 
+def add_logo():
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebarNav"] {
+                background-image: url(https://techbarcelona.com/wp-content/uploads/Esade_RLU-4.png);
+                background-repeat: no-repeat;
+                padding-top: 120px;
+                background-position: 20px 20px;
+            }
+            [data-testid="stSidebarNav"]::before {
+                content: "";
+                margin-left: 20px;
+                margin-top: 20px;
+                font-size: 30px;
+                position: relative;
+                top: 100px;
+                background-repeat: no-repeat;
+                width: <155px>;
+                height: <106px>;
+                display: inline-block;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+#######
+###########
+# Set the background color to gray
+page_bg_img = """
+    <style>
+    [data-testid="stSidebarNav"]{
+    background-color: #e5e5f7;
+    opacity: 0.6;
+    background-image: radial-gradient(#444cf7 0.5px, #e5e5f7 0.5px);
+    background-size: 10px 10px;
+    }
+    </style>
+    """
+st.markdown(page_bg_img, unsafe_allow_html=True)
 
 #We import the database
+#Data Import AWS
 df = pd.read_excel('s3://feacapstone/Capstone Database.xlsx')
-#df = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\preprocessed_df.xlsx') 
+df_cashflow = pd.read_excel('s3://feacapstone/cashflow_adjusted.xlsx')
 
-
+#df = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Capstone Database.xlsx') 
+#df_cashflow = pd.read_excel('C:\\Users\\jansc\\Python_Scripts\\Capstone\\cashflow_adjusted.xlsx')
 
 ########## Here we start to develop the App
 
 # Define app layout
 st.title('M&A App')
 
-# Add sidebar for navigation - The sections we will have available
+#Add Logos
+# Add pictures in the sidebar
+from PIL import Image
+#Image Import AWS
+image1 = Image.open('s3://feacapstone/Esade.png')
+image = Image.open('s3://feacapstone/Deloitte.png')
 
-menu = ['Home', 'Information Overview', 'Company Financial Efficiency Ratios','Market Analysis', 'Machine Learning Insights', 'Valuation Calculator']
+#image1 = Image.open('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Esade.png')
+#image = Image.open('C:\\Users\\jansc\\Python_Scripts\\Capstone\\Deloitte.png')
+
+image.thumbnail((200, 200))
+image1.thumbnail((200, 200))
+
+st.sidebar.image(image1)
+st.sidebar.image(image, caption='Developed by Esade and Deloitte')
+
+# Add sidebar for navigation
+
+menu = ['Home', 'Information Overview', 'Company Financial Efficiency Ratios','Market Analysis', 'Valuation Calculator']
 choice = st.sidebar.selectbox('Select an option', menu)
 
 
 if choice == 'Home':
     st.title("Welcome to the M&A Financial App")
     st.write("""
-    The M&A Financial App is a sophisticated tool designed to analyze investment opportunities across diverse sectors, industries, and geographies. Powered by cutting-edge unsupervised machine learning algorithms, it empowers users to efficiently identify potential targets for M&A activity through comprehensive financial analysis.
+    The M&A Financial App is a sophisticated tool designed to analyze investment opportunities across diverse sectors and industries. Our mission is to empower users to efficiently identify potential targets for M&A activity through comprehensive financial analysis.
     """)
 
     st.markdown("### Key Features")
     st.write("""
     - Access an extensive database of companies with comprehensive financial data
     - Calculate crucial financial ratios and metrics for each company
-    - Utilize advanced clustering algorithms to identify similar companies
-    - Stay informed with the latest news and insights on companies in the database
+    - Be able to make multiple comparisons fo different companies and variables
+    - Ability to make market analysis of different industires
+    - A calculator that gives the projected cashflows and gives a valuation for the company
     """)
 
     st.markdown("### Explore the App")
@@ -79,19 +143,16 @@ if choice == 'Home':
     - **Information Overview**: Gain a high-level summary of the companies in the database
     - **Company Financial Efficiency Ratios**: Analyze the financial ratios and efficiency of individual companies
     - **Market Analysis**: Explore trends and gain valuable insights related to the market and industry
-    - **M&A Insights**: Stay informed about the latest mergers, acquisitions, and divestitures in the industry
-    - **Machine Learning Insights**: Access powerful insights and predictions generated by our advanced machine learning models
+    - **Valuation Calculator**: Calculate the value of any given company
     """)
 
-    # Add a call to action section
     st.markdown("### Get Started")
     st.write("Ready to unlock a world of investment opportunities? Seamlessly navigate through the menu on the left to embark on your financial analysis journey!")
 
     
-  
 elif choice == 'Information Overview':
 
-        st.title("Information Overview")
+        st.title("Key Information Overview")
 
         # Sidebar for selecting a country
         country_names = df['Country'].unique()
@@ -302,50 +363,49 @@ elif choice == 'Information Overview':
         if Equity_column in company_data.columns:
             filtered_data[Equity_column] = company_data[Equity_column]
 
-        # Display the filtered data
-        st.table(filtered_data)
 
         col1, col2 = st.columns(2)
-        # Display operating revenue and gross profit
+        
+        # Display All the key insights
         with col1:
             st.write(f"**Operating Revenue (in thousand EUR):** {format_number(company_data['Operating Revenues (thousand EUR) ' + selected_year].values[0])}")
         with col2:
             st.write(f"**Gross Profit (in thousand EUR):** {format_number(company_data['Gross result (thousand EUR) ' + selected_year].values[0])}")
-
-        # Display EBITDA and net income
+    
         with col1:
             st.write(f"**EBITDA (in thousand EUR):** {format_number(company_data['EBITDA (thousand EUR) ' + selected_year].values[0])}")
         with col2:
             st.write(f"**Net Income (in thousand EUR):** {format_number(company_data['Net profit (thousand EUR) ' + selected_year].values[0])}")
 
-        # Display return on equity and return on total assets
         with col1:
             st.write(f"**Return on Equity (%):** {format_number(company_data['Return on Equity (%), ' + selected_year].values[0])}")
         with col2:
             st.write(f"**Return on Total Assets (%):** {format_number(company_data['Return on Total Assets (%), ' + selected_year].values[0])}")
 
-        # Display profit margin and solvency ratio
         with col1:
             st.write(f"**Profit Margin (%):** {format_number(company_data['Profit Margin (%), ' + selected_year].values[0])}")
         with col2:
             st.write(f"**Solvency Ratio (%):** {format_number(company_data['Solvency Ratio (%), ' + selected_year].values[0])}")
 
-        # Display liquidity ratio and leverage ratio
         with col1:
             st.write(f"**Liquidity Ratio (%):** {format_number(company_data['Liquidity Ratio (%), ' + selected_year].values[0])}")
         with col2:
             st.write(f"**Leverage Ratio (%):** {format_number(company_data['Leverage (%), ' + selected_year].values[0])}")
             
 
-        import pandas as pd
-        import plotly.graph_objects as go
-        import streamlit as st
+        
+           # Additional Statistical Info button
+        if st.button("Additional Info"):
+            st.subheader("Additional Info")
+                    
+            st.table(filtered_data)
+
 
 
  
 
 
-        # Get the list of variables
+        # Set a new list of variables
         variables = [
             'Operating Revenues (thousand EUR)',
             'EBITDA (thousand EUR)',
@@ -393,36 +453,24 @@ elif choice == 'Information Overview':
         ]
         
 
-        # Sidebar for selecting a variable
         selected_variable = st.sidebar.selectbox("Select a Variable for Plotting the Hisogram:", variables)
-
-        # Extract the corresponding column names from the DataFrame
         column_names = [column for column in df.columns if selected_variable in column]
-
-        # Extract the years from the column names
         years = [column.split()[-1] for column in column_names]
-
-        # Filter the DataFrame to include only the selected variable columns
         filtered_df = df[column_names]
 
-        # Prepare the data for plotting
+        # Plotting
         data = [go.Bar(x=years, y=filtered_df.iloc[0].values)]
-
-        # Create the layout for the plot
         layout = go.Layout(title=f"{selected_variable} - Evolution Over the Years")
-
-        # Create the figure
         fig = go.Figure(data=data, layout=layout)
         
         st.title("Histogram Plot")
 
-        # Move the company and variable selection filters below the title
+        #We want the filters below the histogram and not in the left side of the app
         selected_variable = st.selectbox("Select a Variable for Plotting:", variables)
         selected_companies = st.multiselect("Select Companies:", company_names)
-
         st.write("Variable Chosen:", selected_variable)
 
-        # Prepare the data for plotting the histogram
+        # Here we plot the histogram
         histogram_data = []
         for company in selected_companies or []:
             company_data = df[df['Name'] == company]
@@ -431,20 +479,17 @@ elif choice == 'Information Overview':
             values = company_data[column_names].values.flatten().tolist()
             histogram_data.append(go.Bar(name=company, x=years, y=values))
 
-        # Create the layout for the histogram plot
-        histogram_layout = go.Layout(title=f"{selected_variable} - Histogram Plot")
 
-        # Create the figure for the histogram
+        histogram_layout = go.Layout(title=f"{selected_variable} - Histogram Plot")
         histogram_fig = go.Figure(data=histogram_data, layout=histogram_layout)
 
-        # Plot the histogram
+        # Plot it
         st.plotly_chart(histogram_fig)
-
 
         # Additional visualizations - Line Chart
         st.subheader("Line Chart")
 
-        # Prepare the data for the line chart
+        # PLot the line chart / prepare the data
         line_data = []
         for company in selected_companies or []:
             company_data = df[df['Name'] == company]
@@ -455,26 +500,17 @@ elif choice == 'Information Overview':
             sorted_years, sorted_values = zip(*sorted_data)
             line_data.append(go.Scatter(x=sorted_years, y=sorted_values, mode='lines', name=company))
 
-        # Create the layout for the line chart
         line_layout = go.Layout(title=f"{selected_variable} - Line Chart", xaxis_title="Year", yaxis_title=selected_variable)
-
-        # Create the figure for the line chart
         line_fig = go.Figure(data=line_data, layout=line_layout)
-
-        # Plot the line chart
         st.plotly_chart(line_fig)
-
-        import plotly.graph_objects as go
-        import plotly.express as px
-        import streamlit as st
 
         
 
-               # Additional Statistical Info button
+        # Additional Statistical Info button
         if st.button("Additional Statistical Info"):
             st.subheader("Summary Statistics")
 
-            # Initialize a DataFrame to store the summary statistics
+            # Create a new dataframe to store all the values
             summary_stats = pd.DataFrame(columns=["Company", "Variable", "Mean", "Median", "Standard Deviation"])
 
             for company in selected_companies or []:
@@ -492,6 +528,7 @@ elif choice == 'Information Overview':
                     ignore_index=True
                 )
 
+                #We display de info
                 st.write(f"**Company:** {company}")
                 st.write(f"**Variable:** {selected_variable}")
                 st.write(f"**Mean:** {mean:,.0f}")
@@ -534,70 +571,9 @@ elif choice == 'Information Overview':
             # Display the summary statistics DataFrame
             st.subheader("Summary Statistics Table")
             st.dataframe(summary_stats)
-            
-                         # Statistical Tests
-            st.subheader("Statistical Tests")
-
-            # Dropdown for selecting statistical analysis
-            selected_analysis = st.selectbox("Select Statistical Analysis", ["T-Test", "ANOVA Test", "Chi-Square Test"])
-
-            if selected_analysis == "T-Test":
-                st.write("**T-Test**")
-                st.write("T-Test compares the means of two groups to determine if they are significantly different.")
-
-                if len(selected_companies) == 2:
-                    st.write("Performing T-Test...")
-
-                    company1_data = df[df['Name'] == selected_companies[0]][column_names].values.flatten()
-                    company2_data = df[df['Name'] == selected_companies[1]][column_names].values.flatten()
-
-                    t_stat, p_value = ttest_ind(company1_data, company2_data)
-
-                    st.write(f"**T-Statistic:** {t_stat:.2f}")
-                    st.write(f"**P-Value:** {p_value:.4f}")
-
-            elif selected_analysis == "ANOVA Test":
-                st.write("**ANOVA Test**")
-                st.write("ANOVA Test compares the means of three or more groups to determine if there is a significant difference among them.")
-
-                st.write("Performing ANOVA Test...")
-
-                anova_data = []
-                for company in selected_companies or []:
-                    company_data = df[df['Name'] == company]
-                    column_names = [column for column in company_data.columns if selected_variable in column]
-                    variable_data = company_data[column_names].values.flatten()
-                    anova_data.append(variable_data)
-
-                f_stat, p_value = f_oneway(*anova_data)
-
-                st.write(f"**F-Statistic:** {f_stat:.2f}")
-                st.write(f"**P-Value:** {p_value:.4f}")
-
-            elif selected_analysis == "Chi-Square Test":
-                st.write("**Chi-Square Test**")
-                st.write("Chi-Square Test is used to determine if there is a significant association between two categorical variables.")
-
-                if len(selected_companies) == 2:
-                    st.write("Performing Chi-Square Test...")
-
-                    company1_data = df[df['Name'] == selected_companies[0]][column_names].values.flatten()
-                    company2_data = df[df['Name'] == selected_companies[1]][column_names].values.flatten()
-
-                    observed = pd.crosstab(company1_data, company2_data)
-                    chi2, p_value, _, _ = chi2_contingency(observed)
-
-                    st.write(f"**Chi-Square Value:** {chi2:.2f}")
-                    st.write(f"**P-Value:** {p_value:.4f}")
-
-
-
-
-
-
-
-
-
+         
+                    
+                   
 
 
 
@@ -607,231 +583,184 @@ elif choice == 'Information Overview':
 elif choice == 'Company Financial Efficiency Ratios':
     st.title("Company Financial Efficiency Ratios")
 
-    menu = ['Individual Information', 'Global Information']
-    choice = st.sidebar.selectbox("Select a Section:", menu)
 
-    if choice == 'Individual Information':
+    selected_companies = st.multiselect("Select Companies", df["Name"].unique())
+    year_range = range(2010, 2023)  # Update to include 2022
 
-        # Company and year selection
-        selected_companies = st.multiselect("Select Companies", df["Name"].unique())
-        year_range = range(2010, 2023)  # Update to include 2022
+    st.write("Metric Selected : ")
 
-        st.write("Metric Selected : ")
+    # Calculate ratios for all years
+    ratios_data = []
+    for company_name in selected_companies:
+        for year in year_range:
+            year_column = str(year)
 
-        # Calculate ratios for all years
-        ratios_data = []
-        for company_name in selected_companies:
-            for year in year_range:
-                year_column = str(year)
+            filtered_df = df[df['Name'] == company_name]
+            filtered_df = filtered_df.filter(regex=f'.*{year_column}$')
 
-                filtered_df = df[df['Name'] == company_name]
-                filtered_df = filtered_df.filter(regex=f'.*{year_column}$')
+            if filtered_df.empty:
+                continue
 
-                if filtered_df.empty:
-                    continue
+            # Convert columns to numeric values in order to standarize it and avoid the errors
+            numeric_columns = [
+                f'Operating Revenues (thousand EUR) {year_column}',
+                f'Gross result (thousand EUR) {year_column}',
+                f'Operating result (thousand EUR) {year_column}',
+                f'Net profit (thousand EUR) {year_column}',
+                f'Total assets (thousand EUR) {year_column}',
+                f'Current assets (thousand EUR) {year_column}',
+                f'Inventory (thousand EUR) {year_column}',
+                f'Equity (thousand EUR) {year_column}',  
+                f'Financial debts (thousand EUR) {year_column}'  
+            ]
+            filtered_df[numeric_columns] = filtered_df[numeric_columns].apply(pd.to_numeric, errors='coerce')
 
-                # Convert columns to numeric values
-                numeric_columns = [
-                    f'Operating Revenues (thousand EUR) {year_column}',
-                    f'Gross result (thousand EUR) {year_column}',
-                    f'Operating result (thousand EUR) {year_column}',
-                    f'Net profit (thousand EUR) {year_column}',
-                    f'Total assets (thousand EUR) {year_column}',
-                    f'Current assets (thousand EUR) {year_column}',
-                    f'Inventory (thousand EUR) {year_column}',
-                    f'Equity (thousand EUR) {year_column}',  # Added for new ratios
-                    f'Financial debts (thousand EUR) {year_column}'  # Added for new ratios
-                ]
-                filtered_df[numeric_columns] = filtered_df[numeric_columns].apply(pd.to_numeric, errors='coerce')
+            operating_revenues = filtered_df[f'Operating Revenues (thousand EUR) {year_column}']
+            gross_result = filtered_df[f'Gross result (thousand EUR) {year_column}']
+            operating_result = filtered_df[f'Operating result (thousand EUR) {year_column}']
+            net_profit = filtered_df[f'Net profit (thousand EUR) {year_column}']
+            total_assets = filtered_df[f'Total assets (thousand EUR) {year_column}']
+            current_assets = filtered_df[f'Current assets (thousand EUR) {year_column}']
+            inventory = filtered_df[f'Inventory (thousand EUR) {year_column}']
+            equity = filtered_df[f'Equity (thousand EUR) {year_column}']  
+            financial_debts = filtered_df[f'Financial debts (thousand EUR) {year_column}']  
 
-                operating_revenues = filtered_df[f'Operating Revenues (thousand EUR) {year_column}']
-                gross_result = filtered_df[f'Gross result (thousand EUR) {year_column}']
-                operating_result = filtered_df[f'Operating result (thousand EUR) {year_column}']
-                net_profit = filtered_df[f'Net profit (thousand EUR) {year_column}']
-                total_assets = filtered_df[f'Total assets (thousand EUR) {year_column}']
-                current_assets = filtered_df[f'Current assets (thousand EUR) {year_column}']
-                inventory = filtered_df[f'Inventory (thousand EUR) {year_column}']
-                equity = filtered_df[f'Equity (thousand EUR) {year_column}']  # Added for new ratios
-                financial_debts = filtered_df[f'Financial debts (thousand EUR) {year_column}']  # Added for new ratios
+            gross_margin = (gross_result / operating_revenues) * 100
+            operating_margin = (operating_result / operating_revenues) * 100
+            return_on_assets = (net_profit / total_assets) * 100
+            net_profit_margin = (net_profit / operating_revenues) * 100
+            current_ratio = current_assets / total_assets
+            quick_ratio = (current_assets - inventory) / total_assets
 
-                gross_margin = (gross_result / operating_revenues) * 100
-                operating_margin = (operating_result / operating_revenues) * 100
-                return_on_assets = (net_profit / total_assets) * 100
-                net_profit_margin = (net_profit / operating_revenues) * 100
-                current_ratio = current_assets / total_assets
-                quick_ratio = (current_assets - inventory) / total_assets
+            # New ratios
+            debt_to_equity = (financial_debts / equity) * 100
+            solvency = (equity / total_assets) * 100
+            return_on_equity = (net_profit / equity) * 100
 
-                # New ratios
-                debt_to_equity = (financial_debts / equity) * 100
-                solvency = (equity / total_assets) * 100
-                return_on_equity = (net_profit / equity) * 100
-
-                ratios_data.append({
-                    "Company": company_name,
-                    "Year": year,
-                    "Gross Margin": gross_margin.values[0],
-                    "Operating Margin": operating_margin.values[0],
-                    "Return on Assets (ROA)": return_on_assets.values[0],
-                    "Net Profit Margin": net_profit_margin.values[0],
-                    "Current Ratio": current_ratio.values[0],
-                    "Quick Ratio": quick_ratio.values[0],
-                    "Debt to Equity (%)": debt_to_equity.values[0],
-                    "Solvency (%)": solvency.values[0],
-                    "Return on Equity (%)": return_on_equity.values[0]
-                })
+            ratios_data.append({
+                "Company": company_name,
+                "Year": year,
+                "Gross Margin": gross_margin.values[0],
+                "Operating Margin": operating_margin.values[0],
+                "Return on Assets (ROA)": return_on_assets.values[0],
+                "Net Profit Margin": net_profit_margin.values[0],
+                "Current Ratio": current_ratio.values[0],
+                "Quick Ratio": quick_ratio.values[0],
+                "Debt to Equity (%)": debt_to_equity.values[0],
+                "Solvency (%)": solvency.values[0],
+                "Return on Equity (%)": return_on_equity.values[0]
+            })
 
 
-        # Create a new DataFrame for ratios
-        ratios_df = pd.DataFrame(ratios_data)
-
-        # Sidebar for selecting a variable
-        selected_variable = st.sidebar.selectbox("Select a Variable:", ratios_df.columns[2:])
-
-        # Prepare the data for plotting
-        data = []
-        for company in selected_companies:
-            company_data = ratios_df[ratios_df["Company"] == company]
-            data.append(go.Bar(x=company_data["Year"], y=company_data[selected_variable], name=company))
-
-        # Create the layout for the plot
-     
-        layout = go.Layout(title=f"{selected_variable} - Evolution Over the Years", width=800)
+    # Create the dataframe for the ratios / margins and prepare the layout for display it / filter
+    ratios_df = pd.DataFrame(ratios_data)
 
 
-        # Create the figure
-        fig = go.Figure(data=data, layout=layout)
+    selected_variables = st.sidebar.multiselect("Select Variables:", ratios_df.columns[2:])
 
-        # Plot the bar chart
-        st.plotly_chart(fig, use_container_width=False)
+    # Now we prepare the plot
+    data = []
+    for company in selected_companies:
+        company_data = ratios_df[ratios_df["Company"] == company]
+        for variable in selected_variables:
+            data.append(go.Bar(x=company_data["Year"], y=company_data[variable], name=f"{company} - {variable}"))
 
-        # Trend Analysis
-        st.subheader("Trend Analysis")
+    layout = go.Layout(
+        title="Financial Efficiency Ratios - Evolution Over the Years",
+        width=800
+    )
+    fig = go.Figure(data=data, layout=layout)
 
-        # Prepare the data for plotting
-        trend_data = []
-        for company in selected_companies:
-            company_data = ratios_df[ratios_df["Company"] == company]
-            trend_data.append(go.Scatter(x=company_data["Year"], y=company_data[selected_variable], mode="lines", name=company))
+    # Bar chart
+    st.plotly_chart(fig, use_container_width=False)
 
-        # Create the layout for the trend plot
-        trend_layout = go.Layout(title=f"{selected_variable} - Trend Over the Years",
-                                 xaxis=dict(title="Year"),
-                                 yaxis=dict(title=selected_variable))
+    # Trend Analysis
+    st.subheader("Trend Analysis")
 
+    # Once again we preapre the data as we have done before
+    trend_data = []
+    for company in selected_companies:
+        company_data = ratios_df[ratios_df["Company"] == company]
+        for variable in selected_variables:
+            trend_data.append(go.Scatter(x=company_data["Year"], y=company_data[variable], mode="lines", name=f"{company} - {variable}"))
 
+    # Create the layout
+    trend_layout = go.Layout(
+        title="Financial Efficiency Ratios - Trend Over the Years",
+        xaxis=dict(title="Year"),
+        yaxis=dict(title="Ratio Value")
+    )
+    
+    trend_fig = go.Figure(data=trend_data, layout=trend_layout)
+    st.plotly_chart(trend_fig)
 
-        # Create the figure for the trend plot
-        trend_fig = go.Figure(data=trend_data, layout=trend_layout)
-
-        # Plot the trend line chart
-        st.plotly_chart(trend_fig)
-        
-        # Calculate descriptive statistics for selected ratios
-        descriptive_stats = ratios_df[selected_variable].describe()
-
-        # Extract the relevant statistics
-        mean = descriptive_stats['mean']
-        median = descriptive_stats['50%']
-        std_dev = descriptive_stats['std']
-        minimum = descriptive_stats['min']
-        maximum = descriptive_stats['max']
+    # Calculate descriptive statistics for selected ratios
+    if selected_variables:
+        descriptive_stats = ratios_df[selected_variables].describe().T
 
         # Calculate additional insights
-        range_val = maximum - minimum
-        variance = std_dev ** 2
-        coef_of_variation = (std_dev / mean) * 100
+        descriptive_stats['Range'] = descriptive_stats['max'] - descriptive_stats['min']
+        descriptive_stats['Variance'] = descriptive_stats['std'] ** 2
+        descriptive_stats['Coefficient of Variation'] = (descriptive_stats['std'] / descriptive_stats['mean']) * 100
 
-        # Display the descriptive statistics and additional insights
-        st.markdown("**Descriptive Statistics and Insights:**")
-        st.markdown(f"- Mean: **{mean:.2f}**")
-        st.markdown(f"- Median: **{median:.2f}**")
-        st.markdown(f"- Standard Deviation: **{std_dev:.2f}**")
-        st.markdown(f"- Minimum: **{minimum:.2f}**")
-        st.markdown(f"- Maximum: **{maximum:.2f}**")
-        st.markdown(f"- Range: **{range_val:.2f}**")
-        st.markdown(f"- Variance: **{variance:.2f}**")
-        st.markdown(f"- Coefficient of Variation: **{coef_of_variation:.2f}%**")
-        
-   
-        import plotly.subplots as sp
+    # Display the info 
+    st.subheader("Descriptive Statistics and Insights")
 
-        import plotly.subplots as sp
+    if selected_variables:
+        st.write(descriptive_stats[['mean', '50%', 'std', 'min', 'max', 'Range', 'Variance', 'Coefficient of Variation']].round(2))
+    else:
+        st.write("No variables selected.")
 
-        # Scatter Matrix
-        st.subheader("Scatter Matrix")
+    #Some spaces for design 
+    st.write("") 
+    st.write("") 
 
-        # Select the relevant columns for the scatter matrix
-        selected_ratios = ratios_df.columns[2:]
+    #We create the button for the correlation matrix 
+    st.markdown("## Correlation Matrix")
+    show_correlation_matrix = st.checkbox("Check to show correlation matrix")
 
-        # Filter the ratios dataframe for the selected companies
-        filtered_ratios_df = ratios_df[ratios_df['Company'].isin(selected_companies)]
+    if show_correlation_matrix:
+        st.subheader("Correlation Matrix")
 
-        # Create a new dataframe containing only the selected ratios
-        selected_ratios_df = filtered_ratios_df[selected_ratios]
+        # Calculate the correlation matrix
+        correlation_matrix = ratios_df.drop(columns=["Year"]).corr()
+        available_ratios = correlation_matrix.columns.tolist()
+        selected_ratios = st.multiselect("Select Ratios", available_ratios)
+        selected_correlation_matrix = correlation_matrix.loc[selected_ratios, selected_ratios]
+        selected_correlation_values = selected_correlation_matrix[selected_ratios].mean()
 
-        # Drop rows with missing values
-        selected_ratios_df.dropna(inplace=True)
+        # Create the heatmap
+        fig = go.Figure(data=go.Heatmap(
+            z=selected_correlation_matrix.values,
+            x=selected_ratios,
+            y=selected_ratios,
+            colorscale="Inferno",
+            opacity=0.7,  # Set opacity to 0.7 for transparency
+            zmin=-1,  # Set the minimum value for the color scale to -1
+            zmax=1,  # Set the maximum value for the color scale to 1
+            colorbar=dict(
+                title="Correlation",
+                titleside="right"
+            )
+        ))
 
-        # Check if the selected ratios dataframe is empty
-        if selected_ratios_df.empty:
-            st.write("No data available to create the scatter matrix.")
-        else:
-            # Create a figure with subplots
-            fig = sp.make_subplots(rows=len(selected_ratios), cols=len(selected_ratios), shared_xaxes=True, shared_yaxes=True)
+        fig.update_layout(title="Correlation Heatmap")
 
-            # Add scatter plots to the subplots
-            for i, ratio_x in enumerate(selected_ratios):
-                for j, ratio_y in enumerate(selected_ratios):
-                    x = selected_ratios_df[ratio_x]
-                    y = selected_ratios_df[ratio_y]
-                    fig.add_trace(
-                        go.Scatter(x=x, y=y, mode='markers', name=f"{ratio_x} vs {ratio_y}"),
-                        row=i+1, col=j+1
-                    )
+        # Some hover effects
+        fig.update_traces(hovertemplate="Variable A: %{y}<br>Variable B: %{x}<br>Correlation: %{z}<extra></extra>")
 
-                    # Set x-axis and y-axis labels
-                    if j == 0:
-                        fig.update_yaxes(title_text=ratio_y, row=i+1, col=j+1)
-                    if i == len(selected_ratios) - 1:
-                        fig.update_xaxes(title_text=ratio_x, row=i+1, col=j+1)
+        # We plot it as always
+        st.plotly_chart(fig)
+        st.write("Correlation with Selected Ratios:")
+        st.write(selected_correlation_values)
 
-            # Update subplot settings
-            fig.update_layout(height=800, width=800, title="Scatter Matrix", showlegend=False)
+    #Now we create another button / checkbox to hide this section (another way of seeing the correlation between ratios / margins and the companies selcted
+    st.markdown("## Quick analysis by Margin / Ratio by Year")
+    show_global_inf = st.checkbox("Check to show correlation matrix", key="global_inf_checkbox")
 
-            # Show the scatter matrix
-            st.plotly_chart(fig)
-            
-            import seaborn as sns
-            import matplotlib.pyplot as plt
-            import streamlit as st
+    if show_global_inf:
 
-          
-
-
-
-
-
-
-
-
-
-
-       
-
-
-
-       
-
-
-
-
-        
-        
-    elif choice == 'Global Information':
-
-        st.header("Global Information")
-
-        # Create a list of all available ratios
+        # Create a list of all available ratios again...
         ratios = [
             "Gross Margin",
             "Operating Margin",
@@ -844,9 +773,9 @@ elif choice == 'Company Financial Efficiency Ratios':
             "Return on Equity"
         ]
 
-        # Company and year selection
-        selected_companies = st.multiselect("Select Companies", df["Name"].unique())
-        year_range = range(2010, 2023)  # Update to include 2022
+        # Here we add the year selection as the previous one was more general
+        selected_companies = st.multiselect("Select Companies", df["Name"].unique(), key="companies_multiselect")
+        year_range = range(2010, 2023)
         selected_year = st.selectbox("Select a Year", year_range)
 
         ratios_data = []
@@ -867,7 +796,7 @@ elif choice == 'Company Financial Efficiency Ratios':
             financial_debts = filtered_df[f'Financial debts (thousand EUR) {selected_year}']
             equity = filtered_df[f'Equity (thousand EUR) {selected_year}']
 
-            # Convert 'n.d.' values to NaN
+            # Convert 'n.d.' values to NaN to avoid errors
             gross_result = gross_result.replace('n.d.', np.nan)
             operating_result = operating_result.replace('n.d.', np.nan)
             net_profit = net_profit.replace('n.d.', np.nan)
@@ -877,7 +806,7 @@ elif choice == 'Company Financial Efficiency Ratios':
             financial_debts = financial_debts.replace('n.d.', np.nan)
             equity = equity.replace('n.d.', np.nan)
 
-            # Convert columns to float
+            # Convert columns to float also to avoid errors as to standarize all the data outcomes
             gross_result = gross_result.astype(float)
             operating_result = operating_result.astype(float)
             net_profit = net_profit.astype(float)
@@ -887,7 +816,7 @@ elif choice == 'Company Financial Efficiency Ratios':
             financial_debts = financial_debts.astype(float)
             equity = equity.astype(float)
 
-            # Calculate ratios
+            # Calculate the ratios in order to add the into de df
             gross_margin = (gross_result / operating_revenues) * 100
             operating_margin = (operating_result / operating_revenues) * 100
             roa = (net_profit / total_assets) * 100
@@ -913,18 +842,18 @@ elif choice == 'Company Financial Efficiency Ratios':
 
         ratios_df = pd.DataFrame(ratios_data)
 
-        # Check if there are rows in the DataFrame
+        # Check if there are rows in the DataFrame for errors 
         if not ratios_df.empty:
             ratios_df.set_index("Company", inplace=True)
 
-            # Sidebar for selecting variables
+            # Sidebar for selecting the different variables
             x_ratio, y_ratio = st.columns(2)
             with x_ratio:
                 x_axis_ratio = st.selectbox("Select a ratio/margin for the X axis", ratios)
             with y_ratio:
                 y_axis_ratio = st.selectbox("Select a ratio/margin for the Y axis", ratios)
 
-            # Prepare the data for plotting
+            # Plot all the data
             data = []
             for i, company in enumerate(ratios_df.index):
                 x_values = [ratios_df.loc[company, x_axis_ratio]]
@@ -935,15 +864,10 @@ elif choice == 'Company Financial Efficiency Ratios':
                                        hovertemplate="Company: %{text}<br>" + x_axis_ratio + ": %{x}<br>" +
                                        y_axis_ratio + ": %{y}", name=company))
 
-            # Create the layout for the plot
             layout = go.Layout(title=f"{x_axis_ratio} vs {y_axis_ratio} - Global Information",
                                xaxis=dict(title=x_axis_ratio),
                                yaxis=dict(title=y_axis_ratio))
-
-            # Create the figure
             fig = go.Figure(data=data, layout=layout)
-
-            # Plot the scatter chart
             st.plotly_chart(fig, use_container_width=True)
 
             # Calculate correlation coefficient
@@ -960,433 +884,293 @@ elif choice == 'Company Financial Efficiency Ratios':
 
 
 
-
-
-
-
-        
-      
-
-
-
 # Market Analysis
 elif choice == 'Market Analysis':
-    st.title("Market Analysis")
-
-    # Sidebar for selecting a country
-    country_names = df['Country'].unique()
-    selected_country = st.sidebar.selectbox("Select a Country:", country_names)
-
-    # Filter dataframe for the selected country
-    country_data = df[df['Country'] == selected_country]
-
-    # Sidebar for selecting a company
-    company_names = country_data['Name'].unique()
-    selected_company = st.sidebar.selectbox("Select a Company:", company_names)
-
-    # Filter dataframe for the selected company
-    company_data = country_data[country_data['Name'] == selected_company]
-
-    st.write(f"**Selected Company:** {selected_company}")
-
-    # Market Size
-    st.subheader("Market Size")
-    try:
-        if 'Operating Revenue (in thousand EUR)' not in company_data.columns:
-            raise KeyError("Operating Revenue (in thousand EUR) column is missing")
-
-        # Replace 'n.d.' values with NaN
-        company_data = company_data.replace('n.d.', np.nan)
-
-        # Calculate total operating revenue for the country
-        country_revenue = country_data['Operating Revenue (in thousand EUR)'].astype(float).sum()
-
-        # Calculate market share for the selected company
-        company_revenue = company_data['Operating Revenue (in thousand EUR)'].astype(float).sum()
-        market_share = 100 * company_revenue / country_revenue
-
-        market_size = company_revenue / market_share
-        st.write(f"Market Size: {f'{market_size:,.2f}'} million EUR")
-    except (KeyError, ValueError) as e:
-        st.warning(f"Cannot calculate Market Size: {str(e)}")
-
-    # Growth Potential
-    st.subheader("Growth Potential")
-    try:
-        if 'Operating Revenue (in thousand EUR)' not in company_data.columns:
-            raise KeyError("Operating Revenue (in thousand EUR) column is missing")
-
-        # Replace 'n.d.' values with NaN
-        company_data = company_data.replace('n.d.', np.nan)
-
-        # Calculate revenue growth rate for the last 3 years
-        revenue_data = company_data[['Operating Revenue (in thousand EUR)', 'Country']].sort_values(by='Country')
-        revenue_data['Operating Revenue (in thousand EUR)'] = revenue_data['Operating Revenue (in thousand EUR)'].astype(float)
-        revenue_data = revenue_data.groupby('Country').apply(lambda x: (x['Operating Revenue (in thousand EUR)'].iloc[-1] / x['Operating Revenue (in thousand EUR)'].iloc[0])**(1/3) - 1)
-        revenue_growth_rate = revenue_data.mean() * 100
-
-        st.write(f"Revenue Growth Rate (3-year average): {format(revenue_growth_rate, '.2f')}%")
-
-    except (KeyError, ValueError) as e:
-        st.warning(f"Cannot calculate Growth Potential: {str(e)}")
-
-        # Competitive Landscape
-    # Competitive Landscape
-    try:
-        st.subheader("Competitive Landscape")
-
-        if 'Operating Revenue (in thousand EUR)' not in df.columns:
-            raise KeyError("Operating Revenue (in thousand EUR) column is missing")
-
-        # Replace 'n.d.' values with NaN
-        df = df.replace('n.d.', np.nan)
-
-        # Filter dataframe for the selected country
-        country_data = df[df['Country'] == selected_country]
-
-        # Calculate total operating revenue for the country
-        country_revenue = country_data['Operating Revenue (in thousand EUR)'].sum()
-
-        # Calculate market share for all companies in the country
-        total_revenue = country_data['Operating Revenue (in thousand EUR)'].sum()
-        country_data['Market Share'] = country_data['Operating Revenue (in thousand EUR)'] / total_revenue
-
-        # Display top 10 companies by market share
-        top_10_companies = country_data.sort_values('Market Share', ascending=False).head(10)
-        st.subheader("Top 10 Companies by Market Share")
-        st.dataframe(top_10_companies[['Name', 'Market Share']].reset_index(drop=True))
-
-        # Calculate market concentration
-        market_concentration = 100 * top_10_companies['Market Share'].sum()
-        st.write(f"Market Concentration: {format(market_concentration, '.2f')}%")
-
-    except (KeyError, ValueError) as e:
-        st.warning(f"Cannot calculate Competitive Landscape: {str(e)}")
+    st.title("Market Analysis & Growth(g) Forecast")
 
 
-elif choice == "Machine Learning Insights":
-    st.title("Machine Learning Insights")
-    ml_algorithm = st.selectbox("", ["Clustering Analysis","Linear Regression", "XGB Boost"])
     
-    if ml_algorithm == "Clustering Analysis":
-        st.title("Clustering Analysis")
-
+    st.write("Click the button below to execute calculations for Spain's individual growth rates projected over the next decade. These derived metrics can then be seamlessly integrated into the Valuation Calculator for enhanced financial analysis.")
+    if st.button("Calculate growth rates"):
         import pandas as pd
-        import numpy as np
-        from sklearn.cluster import KMeans
-        from sklearn.preprocessing import StandardScaler
-        import plotly.express as px
+        from pmdarima.arima import auto_arima
 
-        # Define the year_variables dictionary
-        years = range(2010, 2023)  # Range of years from 2010 to 2022
-        year_variables = {}  # Dictionary to store variables for each year
+        # Sorting columns in ascending order to ensure the cash flow data is in chronological order
+        df_cashflow = df_cashflow[df_cashflow.columns[::-1]]
 
-        # Iterate over the years
-        for year in years:
-            year_list = []
+        # We'll store all the predictions in this DataFrame
+        predictions = pd.DataFrame()
 
-            # Iterate over the columns and check if they belong to the current year
-            for column in df.columns:
-                if str(year) in column:
-                    year_list.append(column)
+        for i, row in df_cashflow.iterrows():
+            # Ignore the company name column for ARIMA model
+            cashflow_values = row.values
 
-            # Store the list of variables for the current year in the dictionary
-            year_variables[year] = year_list
+            # Ensure the data is numeric and handle any non-numeric values
+            cashflow_values = pd.to_numeric(cashflow_values, errors='coerce')
 
-        # Select the relevant features for clustering
-        selected_year = st.sidebar.selectbox("Select a Year:", range(2010, 2023))
+            # Drop NaN values from the series
+            cashflow_values = cashflow_values[~pd.isnull(cashflow_values)]
 
-        # Get the list of variables for the selected year
-        variables = year_variables[selected_year]
+            if cashflow_values.size == 0:
+                continue
 
-        # Filter the dataframe to include only the selected year's variables
-        features = df[variables]
+            model = auto_arima(cashflow_values, start_p=1, start_q=1,
+                            max_p=5, max_q=5, m=12,
+                            start_P=0, seasonal=False,
+                            d=1, D=1, trace=True,
+                            error_action='ignore',   # we don't want to know if an order does not work
+                            suppress_warnings=True,  # we don't want convergence warnings
+                            stepwise=True)  # set to stepwise
 
-        # Replace non-numeric values with NaN
-        features = features.apply(pd.to_numeric, errors='coerce')
+            forecast, conf_int = model.predict(n_periods=11, return_conf_int=True)  # Forecasting for the next 10 years
 
-        # Handle missing values by filling them with column means
-        features = features.fillna(features.mean(skipna=True, numeric_only=True))
+            # Apply dampening factor
+            dampening_factor = 1.0  # Adjust this as per requirement
+            forecast = [value * (dampening_factor ** j) for j, value in enumerate(forecast)]
 
-        # Perform any necessary data preprocessing steps (e.g., scaling features)
-        scaler = StandardScaler()
-        scaled_features = scaler.fit_transform(features)
+            predictions[i] = forecast
 
-        # Apply the clustering algorithm (e.g., K-means)
-        kmeans = KMeans(n_clusters=3)  # Specify the number of clusters you want to create
-        kmeans.fit(scaled_features)
+        # Transpose the predictions DataFrame and set appropriate column names
+        predictions = predictions.T
+        predictions.columns = range(2023, 2034)
 
-        # Get the cluster labels for each data point
-        cluster_labels = kmeans.labels_
+        growth_rates = predictions.pct_change(axis=1)
 
-        # Add the cluster labels to the original data
-        df['Cluster'] = cluster_labels
+        # Print out the result
+        st.table(growth_rates.head(1))
 
-        # Analyze and interpret the results of the clustering algorithm
-        # You can examine the characteristics and patterns of each cluster using various techniques.
+    
+    variables = [
+            'Operating Revenues (thousand EUR)',
+            'EBITDA (thousand EUR)',
+            'Gross result (thousand EUR)',
+            'Financial income (thousand EUR)',
+            'Operating result (thousand EUR)',
+            'Financial expenses (thousand EUR)',
+            'Corporate income tax (thousand EUR)',
+            'Net profit (thousand EUR)',
+            'Personnel expenses (thousand EUR)',
+            'Goods and materials consumption (thousand EUR)',
+            'Materials (thousand EUR)',
+            'Cash flow (thousand EUR)',
+            'EBIT (thousand EUR)',
+            'Total assets (thousand EUR)',
+            'Current assets (thousand EUR)',
+            'Receivables (thousand EUR)',
+            'Inventory (thousand EUR)',
+            'Fixed assets (thousand EUR)',
+            'Intangible assets (thousand EUR)',
+            'Tangible assets (thousand EUR)',
+            'Other fixed liabilities (thousand EUR)',
+            'Total liabilities and equity (thousand EUR)',
+            'Working capital (thousand EUR)',
+            'Number of employees',
+            'Financial debts (thousand EUR)',
+            'Fixed liabilities (thousand EUR)',
+            'Liquid liabilities (thousand EUR)',
+            'Return on Equity (%)',
+            'Return on Total Assets (%)',
+            'Profit Margin (%)',
+            'Solvency Ratio (%)',
+            'Liquidity Ratio (%)',
+            'Leverage (%)',
+            'Profit per Employee (thousands)',
+            'Average Employee Cost (thousands)',
+            'Total Assets per Employee (thousands)',
+            'Personnel Expenses (%)',
+            'Total Assets (%)',
+            'Equity (%)',
+            'Long-term Creditors (%)',
+            'Working Capital (%)',
+            'Treasury (%)',
+            'Equity (thousand EUR)'
+        ]
 
-        # For example, you can group the data by cluster and calculate the mean values for each feature
-        cluster_means = df.groupby('Cluster').mean(numeric_only=True)
+    plot_type = st.selectbox("Select Plot Type:", ["Histogram", "Line Plot"])
 
-        # Create a dropdown menu for selecting the x and y axes variables
-        x_variable = st.selectbox("Select X-Axis Variable:", variables)
-        y_variable = st.selectbox("Select Y-Axis Variable:", variables)
+    selected_variable = st.selectbox("Select a Variable for Plotting:", variables)
+    company_names = df['Name'].unique()
+    selected_companies = st.multiselect("Select Companies:", company_names)
 
-        # Create a scatter plot of the clusters using Plotly Express
-        fig = px.scatter(df, x=x_variable, y=y_variable, color='Cluster', hover_data=['Name'])
-        st.plotly_chart(fig)
+    st.write("Variable Chosen:", selected_variable)
 
-      # Cluster Comparison
-        st.subheader("Cluster Comparison")
-
-        # Get the unique cluster labels
-        cluster_options = sorted(df['Cluster'].unique())
-
-        # Select clusters for comparison
-        selected_clusters = st.multiselect("Select Clusters:", cluster_options)
-
-        # Get the list of variables for the selected year
-        variables = year_variables[selected_year]
-
-        # Create a list of columns to filter, including the variables and the 'Cluster' column
-        columns_to_filter = variables + ['Cluster']
-
-        # Filter the data for the selected clusters and year
-        cluster_data = df[df['Cluster'].isin(selected_clusters)].filter(columns_to_filter)
-
-        # Group the data by cluster and calculate the mean values for each variable
-        cluster_means = cluster_data.groupby('Cluster').mean(numeric_only=True)
-
-        # Convert the cluster means dataframe to a long format
-        cluster_means = cluster_means.reset_index().melt(id_vars='Cluster', var_name='Variable', value_name='Value')
-
-        # Create a grouped bar chart to compare the clusters
-        fig = px.bar(cluster_means, x='Variable', y='Value', color='Cluster', barmode='group')
-
-        # Customize the plot appearance
-        fig.update_layout(
-            xaxis_title='Variable',
-            yaxis_title='Value',
-            title=f"Cluster Comparison (Year {selected_year})"
-        )
-
-        # Display the plot
-        st.plotly_chart(fig)
-        
-
-
-    elif ml_algorithm == "Linear Regression":
-        st.title("Linear Regression")
-
-        import pandas as pd
-        import streamlit as st
-        import seaborn as sns
-        import matplotlib.pyplot as plt
-        from sklearn.linear_model import LinearRegression
-
-        # Load the dataset
-      
-
-        # Filter numeric columns
-        numeric_columns = df.select_dtypes(include="number")
-
-        # Create a dictionary to store variables for each year
-        years = range(2010, 2023)
-        year_variables = {}
-
-        for year in years:
-            year_list = []
-            for column in numeric_columns:
-                if str(year) in column:
-                    year_list.append(column)
-            year_variables[year] = year_list
-
-        # Sidebar selection
-        selected_year = st.sidebar.selectbox("Select a Year:", years)
-        selected_company = st.sidebar.selectbox("Select a Company:", df["Name"].unique())
-        target_variable = st.sidebar.selectbox("Select a Target Variable:", year_variables[selected_year])
-
-        # Filter data for the selected year and company
-        filtered_data = df[df["Name"] == selected_company][year_variables[selected_year] + [target_variable]].dropna()
-        
-        
-
-        # Check if there is enough data for modeling
-        if filtered_data.shape[0] < 2:
-            st.warning("Insufficient data for modeling.")
+    # Prepare the data for plotting
+    plot_data = []
+    for company in selected_companies or []:
+        company_data = df[df['Name'] == company]
+        column_names = [column for column in company_data.columns if selected_variable in column]
+        years = [column.split()[-1] for column in column_names]
+        values = company_data[column_names].values.flatten().tolist()
+        if plot_type == "Histogram":
+            plot_data.append(go.Bar(name=company, x=years, y=values))
         else:
-            # Split data into features (X) and target variable (y)
-            X = filtered_data[year_variables[selected_year]]
-            y = filtered_data[target_variable]
+            sorted_data = sorted(zip(years, values))
+            sorted_years, sorted_values = zip(*sorted_data)
+            plot_data.append(go.Scatter(x=sorted_years, y=sorted_values, mode='lines', name=company))
 
-            # Reshape X and y to match the required dimensions
-            X = X.values.reshape(-1, 1)
-            y = y.values.reshape(-1, 1)
+    # Calculate the market average for the selected variable
+    market_data = df.copy()
+    column_names = [column for column in market_data.columns if selected_variable in column]
+    years = [column.split()[-1] for column in column_names]
 
-            # Fit linear regression model
-            model = LinearRegression()
-            model.fit(X, y)
+    market_values = market_data[column_names].mean().tolist()
+    lower_quartile_values = market_data[column_names].quantile(0.25).tolist()
+    upper_quartile_values = market_data[column_names].quantile(0.75).tolist()
 
-            # Predict target variable
-            y_pred = model.predict(X)
+    sorted_market_values = sorted(zip(years, market_values))
+    sorted_lower_values = sorted(zip(years, lower_quartile_values))
+    sorted_upper_values = sorted(zip(years, upper_quartile_values))
 
-            # Plot the results
-            plt.figure(figsize=(10, 6))
-            plt.scatter(X, y, color="b", label="Actual")
-            plt.plot(X, y_pred, color="r", label="Predicted")
-            plt.xlabel("Features")
-            plt.ylabel("Target Variable")
-            plt.title("Linear Regression")
-            plt.legend()
-            st.pyplot()
+    sorted_years, sorted_values = zip(*sorted_market_values)
+    if plot_type == "Histogram":
+        plot_data.append(go.Bar(name='Market Average', x=sorted_years, y=sorted_values))
+    else:
+        plot_data.append(go.Scatter(x=sorted_years, y=sorted_values, mode='lines', name='Market Average'))
 
-    elif ml_algorithm == "XGB Boost":
-        st.title("XGB Boost")
-        
-        import xgboost as xgb
-        import pandas as pd
-        import streamlit as st
+    sorted_years, sorted_values = zip(*sorted_lower_values)
+    if plot_type == "Histogram":
+        plot_data.append(go.Bar(name='Lower Quartile', x=sorted_years, y=sorted_values))
+    else:
+        plot_data.append(go.Scatter(x=sorted_years, y=sorted_values, mode='lines', name='Lower Quartile'))
 
-        # Define the year_variables dictionary
-        years = range(2010, 2023)  # Range of years from 2010 to 2022
-        year_variables = {}  # Dictionary to store variables for each year
+    sorted_years, sorted_values = zip(*sorted_upper_values)
+    if plot_type == "Histogram":
+        plot_data.append(go.Bar(name='Upper Quartile', x=sorted_years, y=sorted_values))
+    else:
+        plot_data.append(go.Scatter(x=sorted_years, y=sorted_values, mode='lines', name='Upper Quartile'))
 
-        # Iterate over the years
-        for year in years:
-            year_list = []
+    if plot_type == "Histogram":
+        layout = go.Layout(title=f"{selected_variable} - Histogram Plot")
+    else:
+        layout = go.Layout(title=f"{selected_variable} - Line Chart", xaxis_title="Year", yaxis_title=selected_variable)
 
-            # Iterate over the columns and check if they belong to the current year
-            for column in df.columns:
-                if str(year) in column:
-                    year_list.append(column)
+    fig = go.Figure(data=plot_data, layout=layout)
 
-            # Store the list of variables for the current year in the dictionary
-            year_variables[year] = year_list
-
-        # Select the relevant features for XGBoost regression
-        selected_year = st.sidebar.selectbox("Select a Year:", range(2010, 2023))
-        selected_features = year_variables[selected_year]
-        selected_target_variable = st.sidebar.selectbox("Select the Target Variable:", selected_features)
-
-        # Filter the dataset by year
-        filtered_df = df[selected_features]
-
-        # Filter the dataset by company name
-        company_name = st.sidebar.selectbox("Select company", df['Name'].unique())
-        filtered_df = filtered_df.loc[df['Name'] == company_name]
-
-        # Split the dataset into features (X) and target variable (y)
-        X = filtered_df.drop(selected_target_variable, axis=1)
-        y = filtered_df[selected_target_variable]
-
-        # Create the XGBoost regression model
-        xgbr = xgb.XGBRegressor()
-
-        # Train the model
-        xgbr.fit(X, y)
-
-        # Make predictions on the filtered dataset
-        y_pred = xgbr.predict(X)
-
-        # Add the predicted values to the filtered dataset
-        filtered_df['Predicted'] = y_pred
-
-        # Visualize the actual and predicted values in an interactive line plot
-        st.line_chart(filtered_df[[selected_target_variable, 'Predicted']])
+    st.plotly_chart(fig)
 
 
+  
 
 
-
-    
 elif choice == "Valuation Calculator":
     st.title("Valuation Calculator")
-    valuation_method = st.selectbox("Select Valuation Method", ["DCF", "P/E Ratio"])
-    
-    # Define the list of variables
-    variables = [
-        'Operating Revenues (thousand EUR)',
-        'EBITDA (thousand EUR)',
-        'Gross result (thousand EUR)',
-        'Financial income (thousand EUR)',
-        'Operating result (thousand EUR)',
-        'Financial expenses (thousand EUR)',
-        'Corporate income tax (thousand EUR)',
-        'Net profit (thousand EUR)',
-        'Personnel expenses (thousand EUR)',
-        'Goods and materials consumption (thousand EUR)',
-        'Materials (thousand EUR)',
-        'Cash flow (thousand EUR)',
-        'EBIT (thousand EUR)',
-        'Total assets (thousand EUR)',
-        'Current assets (thousand EUR)',
-        'Receivables (thousand EUR)',
-        'Inventory (thousand EUR)',
-        'Fixed assets (thousand EUR)',
-        'Intangible assets (thousand EUR)',
-        'Tangible assets (thousand EUR)',
-        'Other fixed liabilities (thousand EUR)',
-        'Total liabilities and equity (thousand EUR)',
-        'Working capital (thousand EUR)',
-        'Number of employees',
-        'Financial debts (thousand EUR)',
-        'Fixed liabilities (thousand EUR)',
-        'Liquid liabilities (thousand EUR)',
-        'Return on Equity (%)',
-        'Return on Total Assets (%)',
-        'Profit Margin (%)',
-        'Solvency Ratio (%)',
-        'Liquidity Ratio (%)',
-        'Leverage (%)',
-        'Profit per Employee (thousands)',
-        'Average Employee Cost (thousands)',
-        'Total Assets per Employee (thousands)',
-        'Personnel Expenses (%)',
-        'Total Assets (%)',
-        'Equity (%)',
-        'Long-term Creditors (%)',
-        'Working Capital (%)',
-        'Treasury (%)'
-    ]
 
-    def dcf_valuation(company_name, discount_rate, free_cash_flow):
-        # Calculate the discounted cash flow
-        dcf = free_cash_flow / (1 + discount_rate / 100)  # Adjust the formula based on your specific calculation
 
-        # Display the DCF result
-        st.subheader("DCF Valuation Result")
-        st.write(f"The discounted cash flow (DCF) for {company_name} is: {dcf:.2f} thousand EUR")
+    # Set the locale to the desired format
+    locale.setlocale(locale.LC_ALL, 'en_US')
 
-    def pe_ratio_valuation(company_name, earnings_per_share):
-        # Calculate the P/E ratio
-        pe_ratio = dcf / earnings_per_share if earnings_per_share != 0 else 0
 
-        # Display the P/E ratio result
-        st.subheader("P/E Ratio Valuation Result")
-        st.write(f"The Price-to-Earnings (P/E) ratio for {company_name} is: {pe_ratio:.2f}")
+    st.subheader('DCF Valuation Calculator')
+    company_name = st.selectbox('Select Company', df['Name'].unique())
+    selected_company = df[df['Name'] == company_name]
 
-    if valuation_method == "DCF":
-        # Company selection
-        company_name = st.selectbox("Select Company", df["Name"].unique())
+    # Calculate projected free cash flows
+    last_revenue = selected_company['Operating Revenues (thousand EUR) 2022'].sum()
+    growth_rate = st.number_input('Growth Rate (%)', value=5.0)
+    discount_rate = st.number_input('Discount Rate (%)', value=10.0)
+    num_years = st.number_input('Number of Years', value=5, min_value=1)
 
-        # Discount rate input
-        discount_rate = st.number_input("Discount Rate (%)", value=10.0)
+    free_cash_flows = [last_revenue]
+    for _ in range(num_years):
+        last_revenue *= 1 + growth_rate / 100
+        free_cash_flows.append(last_revenue)
 
-        # Free Cash Flow input
-        free_cash_flow = st.number_input("Free Cash Flow (thousand EUR)")
+    # Calculate present value of free cash flows
+    present_value = 0
+    discount_factors = []
+    for year, cash_flow in enumerate(free_cash_flows, start=1):
+        discount_factor = 1 / ((1 + discount_rate / 100) ** year)
+        present_value += cash_flow * discount_factor
+        discount_factors.append(discount_factor)
 
-        # Perform DCF valuation
-        dcf_valuation(company_name, discount_rate, free_cash_flow)
+    # Calculate terminal value
+    terminal_growth_rate = st.number_input('Terminal Growth Rate (%)', value=2.5)
+    terminal_cash_flow = free_cash_flows[-1] * (1 + terminal_growth_rate / 100)
+    terminal_discount_factor = 1 / ((discount_rate - terminal_growth_rate) / 100)
+    terminal_value = terminal_cash_flow * terminal_discount_factor
 
-    elif valuation_method == "P/E Ratio":
-        # Company selection
-        company_name = st.selectbox("Select Company", df["Name"].unique())
+    # Calculate enterprise value
+    enterprise_value = present_value + terminal_value
 
-        # Earnings Per Share input
-        earnings_per_share = st.number_input("Earnings Per Share (EUR)")
+    # Additional inputs
 
-        # Perform P/E ratio valuation
-        pe_ratio_valuation(company_name, earnings_per_share)
+    shares_outstanding = st.number_input('Shares Outstanding (millions)', value=100)
+    value_per_share = enterprise_value / (shares_outstanding * 1e6)
+
+    # Format the numbers with thousands separator using commas for standarization purposes
+    formatted_last_revenue = locale.format_string('%.0f', last_revenue, grouping=True)
+    formatted_present_value = locale.format_string('%.0f', present_value, grouping=True)
+    formatted_terminal_value = locale.format_string('%.0f', terminal_value, grouping=True)
+    formatted_enterprise_value = locale.format_string('%.0f', enterprise_value, grouping=True)
+    formatted_value_per_share = locale.format_string('%.2f', value_per_share)
+
+    # Prepare data for the projected free cash flows table
+    years = np.arange(1, num_years + 1)
+    cash_flows_table = pd.DataFrame({'Year': years, 'Projected Free Cash Flows': free_cash_flows[:-1]})
+    cash_flows_table['Projected Free Cash Flows'] = cash_flows_table['Projected Free Cash Flows'].apply(lambda x: locale.format_string('%.0f', x, grouping=True))
+
+    # Calculate discount factors for each year
+    discount_factors = [1 / ((1 + discount_rate / 100) ** year) for year in years]
+
+    # Create a table to display the valuation results
+    valuation_table = pd.DataFrame({
+        'FCF': [formatted_last_revenue] + cash_flows_table['Projected Free Cash Flows'].tolist(),
+        'Terminal Growth Rate': [f'{terminal_growth_rate}%'] + [''] * num_years,
+        'WACC': [f'{discount_rate}%'] + [''] * num_years,
+        'Terminal Value': [formatted_terminal_value] + [''] * num_years,
+        'Discount Factor (WACC)': [''] + [f'{discount_factor:.2f}' for discount_factor in discount_factors],
+        'PV of FCF': [formatted_present_value] + [''] * num_years,
+        'PV of Terminal Value': [''] + [''] * num_years,
+        'Total PV of Core Operation': [formatted_enterprise_value] + [''] * num_years,
+        'Equity Value': [formatted_enterprise_value] + [''] * num_years,
+        'Shares Outstanding (millions)': [shares_outstanding] + [''] * num_years,
+        'Earnings Per Share outstanding': [formatted_value_per_share] + [''] * num_years
+    })
+
+    # Display the results
+    st.subheader('Valuation Results')
+    st.write(f"Company Name: {company_name}")
+    st.write("Projected Free Cash Flows:")
+
+    st.table(valuation_table)
+
+    # Plotting the projected free cash flows
+    fig = go.Figure()
+
+    # Add a line plot for the projected free cash flows
+    fig.add_trace(go.Scatter(
+        x=years,
+        y=free_cash_flows[:-1],
+        mode='lines+markers',
+        name='Projected Free Cash Flows',
+        line=dict(color='blue')
+    ))
+
+    # Add labels to the data points on the plot
+    annotations = [dict(
+        x=year,
+        y=cash_flow,
+        text=locale.format_string('%.0f', cash_flow, grouping=True),
+        xanchor='center',
+        yanchor='bottom',
+        showarrow=False,
+        font=dict(color='white')
+    ) for year, cash_flow in zip(years, free_cash_flows[:-1])]
+    fig.update_layout(annotations=annotations)
+
+    # Set the layout for the plot
+    fig.update_layout(
+        title='Projected Free Cash Flows',
+        xaxis_title='Years',
+        yaxis_title='Free Cash Flows (thousand EUR)',
+        showlegend=True,
+        legend=dict(x=0.02, y=0.98),
+        hovermode='closest'
+    )
+
+    # Display the plot
+    st.plotly_chart(fig)
+
 
 
 
